@@ -1,0 +1,283 @@
+<html>
+  <head>
+    <title> Create an Image using JavaScript</title>
+  </head>
+  <body>
+    <h2>Image</h2>
+    <p>
+      <img src="http://i.imgur.com/yTKfZF3.png"/>
+    </p>
+    
+    <h2>Algorithm</h2>
+    <p>
+      I created this image with two functions. <ul>
+        <li>One function to make sure shapes are within image size.</li>
+        <li>Second to size shapes, place and color.
+      </ul>
+    </p>
+
+    <h2>Code</h2>
+<pre>
+function insideBox( pixel, x1, y1, x2, y2 ) {
+    var x = pixel.getX();
+    var y = pixel.getY();
+    
+    if( x1 > x2 ) {  tmp = x2; x2 = x1; x1 = tmp; }
+    if( y1 > y2 ) {  tmp = y2; y2 = y1; y1 = tmp; }
+    
+    // Check if the pixel is within image size;
+    if( x >= x1 && x <= x2 && y >= y1 && y <= y2 ){
+        return true;
+    }
+    return false;
+}
+
+
+// using function from instructions;
+function dist( pixel, x, y ) {
+    var dx = pixel.getX() - x;
+    var dy = pixel.getY() - y;
+    return Math.sqrt( dx * dx + dy * dy );
+}
+//creating image;
+var image = new SimpleImage( 300, 300 );
+
+for( var pixel of image.values()) {
+    //  rectangle colored red;
+    if( insideBox( pixel, 25, 25, 65, 65 ) ) {
+        //  This square in red...
+        pixel.setRed( 255 );
+    }
+        //This rectangle with multi/fading color;
+    if( insideBox( pixel, 30, 150, 150, 80 ) ) {
+        pixel.setBlue( Math.round( 300 - 1.5 * dist( pixel, 25, 75 ) ) );
+        pixel.setRed( Math.round( 300 - 1.5 * dist( pixel, 150, 150 ) ) );
+        pixel.setGreen( Math.round( 300 - 2.3 * dist( pixel, 155, 35 ) ) );
+        
+    }
+}
+print( image );
+</pre>
+    <h2>Altering image</h2>
+    <p>
+      <img src="http://i.imgur.com/pP9DcE9.jpg"/>
+ </p>
+ <p>Starting with the above image and blurring the image for a different look.</p>
+    <p>
+      <img src="http://i.imgur.com/YVLYkTW.png"/>
+    </p>
+    <h2>Code</h2>
+    <pre>
+    function ensureInImage (coordinate, size) {
+    // coordinate cannot be negative
+    if (coordinate < 0) {
+        return 0;
+    }
+    // coordinate must be in range [0 .. size-1]
+    if (coordinate >= size) {
+        return size - 1;
+    }
+    return coordinate;
+}
+//Replacing current values for image to blur
+function getPixelNearby (image, x, y, diameter) {
+    var dx = Math.random() * diameter - diameter / 4;
+    var dy = Math.random() * diameter - diameter / 4;
+    var nx = ensureInImage(x + dx, image.getWidth());
+    var ny = ensureInImage(y + dy, image.getHeight());
+    return image.getPixel(nx, ny);
+}
+
+//creating image
+var image = new SimpleImage("e-portfolioPicture.jpg");
+//sizing output image the same as image
+var output = new SimpleImage(image.getWidth(), image.getHeight());
+//creating output image values using values from image using getPixelNearby to blur
+for (var pixel of image.values()) {
+    var x = pixel.getX();
+    var y = pixel.getY();
+    if (Math.random() > 0.5) {
+        var other = getPixelNearby(image, x, y, 50);
+        output.setPixel(x, y, other);
+    }
+    //if values are not within allowable bounds set output to original image
+    else {
+        output.setPixel(x, y, pixel);
+    }
+}
+print(output);
+
+    </pre>
+    <h2>Image hidden in other image</h2>
+    <p>Starting with first image, hiding the following image and at the end extracting and displaying both images recovered.</p>
+    <img src="http://i.imgur.com/mcUaTsN.jpg"/>
+    <img src="http://i.imgur.com/9OnGgZu.png"/>
+    <img src="http://i.imgur.com/MxPSSsN.png"/>
+    <img src="http://i.imgur.com/SpzHU3n.png"/>
+    <h2>Code</h2>
+    <pre>
+    //resize images to fit
+function cropImage( image, width, height ) {
+    var imgOut = new SimpleImage( width, height );
+
+    // Copy the image pixel by pixel...
+    for( x = 0; x < width; x++ ) {
+        for( y = 0; y < height; y++ ) {
+            var p = image.getPixel( x, y );
+            var p_out = imgOut.getPixel( x, y );
+            
+            // Copy  image to new size
+            p_out.setRed( p.getRed() );
+            p_out.setGreen( p.getGreen() );
+            p_out.setBlue( p.getBlue() );
+        }
+    }
+    
+    
+    return imgOut;
+}
+
+
+
+//makes room for image to hide
+function newBits( image, num ) {
+    // keep 1 to 6 bits of image to hide in
+    if( num < 1 || num > 7 ) {
+        
+       
+        return image;
+    }
+    
+    //  value for the upper bits
+    var mask = Math.pow(2, num );
+    
+    // assign color according to value
+    for( var p of image.values() ) {
+        p.setRed( Math.floor( p.getRed() / mask ) * mask );
+        p.setGreen( Math.floor( p.getGreen() / mask ) * mask );
+        p.setBlue( Math.floor( p.getBlue() / mask ) * mask );
+    }
+    return image;
+}
+
+
+//shift image to make room for image to hide
+function shift( image, num )
+{
+    
+    if( num < 1 || num > 7 ) {
+        
+        return image;
+    }
+    // Shift each pixel value to the left according to value of num bits
+    var by = Math.pow( 2, ( 8 - num ) );
+    
+    for( var p of image.values() ) {
+        p.setRed( Math.floor( p.getRed() / by ) );
+        p.setGreen( Math.floor( p.getGreen() / by ) );
+        p.setBlue( Math.floor( p.getBlue() / by ) );
+    }
+    return image;
+}
+
+
+
+//combine images according to pixel value
+function combine( image1, image2 ) {
+    
+    var imgCombined = new SimpleImage( image1.getWidth(), image1.getHeight() );
+    
+    for( var p1 of image1.values() ) {
+        var x = p1.getX();
+        var y = p1.getY();
+        var p2 = image2.getPixel( x, y );
+        var p_out = imgCombined.getPixel( x, y );
+        
+        
+        if( p1.getRed() + p2.getRed() <= 255 ) {
+            p_out.setRed( p1.getRed() + p2.getRed() );
+        } 
+        if( p1.getGreen() + p2.getGreen() <= 255 ) {
+            p_out.setGreen( p1.getGreen() + p2.getGreen() );
+        } 
+        if( p1.getBlue() + p2.getBlue() <= 255 ) {
+            p_out.setBlue( p1.getBlue() + p2.getBlue() );
+        } 
+    }
+    return imgCombined;
+}
+
+
+
+//hides image2 in image1
+function hideImage( image1, image2, num ) {
+    // little validation
+    if( num < 1 || num > 7 ) {
+        
+        return image2;
+    }
+    
+    //using crop to resize
+    var cropWidth = Math.min( image1.getWidth(), image2.getWidth() );
+    var cropHeight = Math.min( image1.getHeight(), image2.getHeight() );
+    var imgMain = cropImage( image1, cropWidth, cropHeight );
+    var imgHide = cropImage( image2, cropWidth, cropHeight );
+    
+    // zeros lower bits of the imgMain
+    imgMain = newBits( imgMain, num );
+    
+    //  Shifts the bits of the imgHide
+    imgHide = shift( imgHide, num );
+    
+    //  Combine images
+    imgOut = combine( imgMain, imgHide );
+    
+    return imgOut;
+}
+
+
+//Recover hidden image
+function recoverImage( image, num ) {
+    var width = image.getWidth();
+    var height = image.getHeight();
+    var imgOut = new SimpleImage( width, height );
+    
+    var by = Math.pow( 2, num ) - 1;
+    
+    for( var p of image.values() ) {
+        var x = p.getX();
+        var y = p.getY();
+        var px = imgOut.getPixel( x, y );
+    
+        px.setRed( ( ( p.getRed() & by ) << ( 8 - num ) ) );
+        px.setGreen( ( ( p.getGreen() & by ) << ( 8 - num ) ) );
+        px.setBlue( ( ( p.getBlue() & by ) << ( 8 - num ) ) );
+    }
+    return imgOut;
+}
+
+var imgMain = new SimpleImage( "smalluniverse.jpg" );
+var imgHide = new SimpleImage( "smallpanda.png" );
+
+
+// Crop images to smallest size
+var cropWidth = Math.min( imgMain.getWidth(), imgHide.getWidth() );
+var cropHeight = Math.min( imgMain.getHeight(), imgHide.getHeight() );
+var imgMain = cropImage( imgMain, cropWidth, cropHeight );
+var imgHide = cropImage( imgHide, cropWidth, cropHeight );
+
+
+imgOutput = hideImage( imgMain, imgHide, 2 );
+
+print( imgMain );
+print( imgHide );
+print( imgOutput );
+
+
+var imgHidden = recoverImage( imgOutput, 2 );
+print( imgHidden );
+    
+
+    </pre>
+  </body>
+</html>
